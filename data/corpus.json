@@ -9,14 +9,14 @@
     "hadith_number": null,
     "narrator": null,
     "authenticity": "Qur'an",
-    "arabic": "لَا يُكَلِّفُ اللَّهُ نَفْسًا إِلَّا وُسْعَهَا",
+    "arabic": "لَا يُكَلِّفُ ٱللَّهُ نَفْسًا إِلَّا وُسْعَهَا",
     "transliteration": "Lā yukallifu Allāhu nafsan illā wusʻahā",
     "translation": "Allah does not burden a soul beyond what it can bear.",
     "themes": ["anxiety", "overwhelm", "stress", "hardship"],
     "intents": ["comfort", "guidance"],
     "notes": "Reassurance that whatever difficulty a person is facing, Allah has already accounted for their capacity to bear it.",
     "citation": "Qur'an 2:286 (partial)",
-    "verified_against_source": false
+    "verified_against_source": true
   },
   {
     "id": "quran-94-5-6-ease",
@@ -28,14 +28,15 @@
     "hadith_number": null,
     "narrator": null,
     "authenticity": "Qur'an",
-    "arabic": "فإِنَّ مَعَ الْعُسْرِ يُسْرًا إِنَّ مَعَ الْعُسْرِ يُسْرًا",
+    "arabic": "فَإِنَّ مَعَ ٱلْعُسْرِ يُسْرًا إِنَّ مَعَ ٱلْعُسْرِ يُسْرًا",
     "transliteration": "Fa-inna maʻa al-ʻusri yusrā, inna maʻa al-ʻusri yusrā",
     "translation": "So, verily, with hardship comes ease. Verily, with hardship comes ease.",
     "themes": ["hardship", "hope", "stress", "sadness"],
     "intents": ["comfort", "guidance"],
     "notes": "A repeated promise directly after describing difficulty, emphasizing that ease is not just possible but paired with hardship.",
     "citation": "Qur'an 94:5-6",
-    "verified_against_source": false
+    "verified_against_source": false,
+    "verification_note": "Ayah 5 cross-checked against api.quran.com and corrected. Ayah 6 (identical wording minus the leading 'Fa-') was not independently fetched -- verify_corpus.py only spot-checks the first ayah in a range -- but is one of the most well-established repeated phrases in the Qur'an."
   },
   {
     "id": "quran-13-28-rest",
@@ -47,14 +48,14 @@
     "hadith_number": null,
     "narrator": null,
     "authenticity": "Qur'an",
-    "arabic": "أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلوبُ",
+    "arabic": "أَلَا بِذِكْرِ ٱللَّهِ تَطْمَئِنُّ ٱلْقُلُوبُ",
     "transliteration": "Alā bidhikri Allāhi tatmaʻinnu al-qulūb",
     "translation": "Verily, in the remembrance of Allah do hearts find rest.",
     "themes": ["anxiety", "loneliness", "restlessness"],
     "intents": ["comfort"],
     "notes": "Points to remembrance of Allah (dhikr) as a direct source of inner calm when the heart feels unsettled.",
     "citation": "Qur'an 13:28 (partial)",
-    "verified_against_source": false
+    "verified_against_source": true
   },
   {
     "id": "quran-65-3-tawakkul",
@@ -66,14 +67,14 @@
     "hadith_number": null,
     "narrator": null,
     "authenticity": "Qur'an",
-    "arabic": "وَمَن يَتَوَكَّلْ عَلَى اللَّهِ فَهُوَ حَسْبُهُ",
+    "arabic": "وَمَن يَتَوَكَّلْ عَلَى ٱللَّهِ فَهُوَ حَسْبُهُۥٓ",
     "transliteration": "Wa man yatawakkal ʻalā Allāhi fahuwa ḥasbuh",
     "translation": "And whoever relies upon Allah - then He is sufficient for him.",
     "themes": ["uncertainty", "anxiety", "trust in allah", "decision"],
     "intents": ["comfort", "guidance", "patience"],
     "notes": "Directly addresses uncertainty about outcomes: reliance on Allah (tawakkul) is presented as sufficient, after one has done what is within their control.",
     "citation": "Qur'an 65:3 (partial)",
-    "verified_against_source": false
+    "verified_against_source": true
   },
   {
     "id": "quran-3-173-hasbunallah",
@@ -85,14 +86,14 @@
     "hadith_number": null,
     "narrator": null,
     "authenticity": "Qur'an",
-    "arabic": "حَسْبُنَا اللَّهُ وَنِعْمَ الْوَكِيلُ",
+    "arabic": "حَسْبُنَا ٱللَّهُ وَنِعْمَ ٱلْوَكِيلُ",
     "transliteration": "Ḩasbunā Allāhu wa niʻma al-wakīl",
     "translation": "Allah is sufficient for us, and He is the best Disposer of affairs.",
     "themes": ["fear", "anxiety", "trust in allah"],
     "intents": ["comfort", "protection"],
     "notes": "Said by believers facing a threatening situation; a short, memorable affirmation of trust used widely for fear and anxiety.",
     "citation": "Qur'an 3:173 (partial)",
-    "verified_against_source": false
+    "verified_against_source": true
   },
   {
     "id": "quran-12-87-no-despair",
@@ -104,14 +105,14 @@
     "hadith_number": null,
     "narrator": null,
     "authenticity": "Qur'an",
-    "arabic": "وَلَا تَأْيَسُوا مِن رَّوْحِ اللَّهِ",
-    "transliteration": "Wa lā tayʻasū min rawḥi Allāh",
-    "translation": "And do not despair of relief from Allah.",
+    "arabic": "وَلَا تَا۟يْـَٔسُوا۟ مِن رَّوْحِ ٱللَّهِ ۖ إِنَّهُۥ لَا يَا۟يْـَٔسُ مِن رَّوْحِ ٱللَّهِ إِلَّا ٱلْقَوْمُ ٱلْكَـٰفِرُونَ",
+    "transliteration": "Wa lā tayʻasū min rawḥi Allāh, innahu lā yayʻasu min rawḥi Allāhi illā al-qawmu al-kāfirūn",
+    "translation": "And do not despair of relief from Allah. Indeed, no one despairs of relief from Allah except the disbelieving people.",
     "themes": ["despair", "hope", "sadness"],
     "intents": ["comfort", "guidance"],
     "notes": "Spoken in the story of Yusuf's family during prolonged hardship, as a direct command against giving up hope in Allah's relief.",
     "citation": "Qur'an 12:87 (partial)",
-    "verified_against_source": false
+    "verified_against_source": true
   },
   {
     "id": "quran-39-53-forgiveness",
@@ -123,14 +124,14 @@
     "hadith_number": null,
     "narrator": null,
     "authenticity": "Qur'an",
-    "arabic": "قُل يَا عِبَادِيَ الَّذِينَ أَسْرَفُوا عَلَى أَنْفُسِهِمْ لَا تَقْنَطُوا مِن رَّحْمَةِ اللَّهِ إِنَّ اللَّهَ يَهْفِرُ الذُّنُوبَ جَمِيعًا",
+    "arabic": "قُلْ يَـٰعِبَادِىَ ٱلَّذِينَ أَسْرَفُوا۟ عَلَىٰٓ أَنفُسِهِمْ لَا تَقْنَطُوا۟ مِن رَّحْمَةِ ٱللَّهِ ۚ إِنَّ ٱللَّهَ يَغْفِرُ ٱلذُّنُوبَ جَمِيعًا",
     "transliteration": "Qul yā ʻibādiya alladhīna asrafū ʻalā anfusihim lā taqnaṭū min raḥmati Allāhi inna Allāha yaghfiru al-dhunūba jamīʻā",
     "translation": "Say: O My servants who have transgressed against themselves, do not despair of the mercy of Allah. Indeed, Allah forgives all sins.",
     "themes": ["guilt", "despair", "forgiveness"],
     "intents": ["forgiveness", "comfort"],
-    "notes": "A direct address from Allah to those weighed down by sin, explicitly forbidding despair and affirming the scope of His mercy.",
+    "notes": "A direct address from Allah to those weighed down by sin, explicitly forbidding despair and affirming the scope of His mercy. (An earlier version of this entry had a single-letter transcription error turning 'forgives' into a nonsense word -- caught and fixed via scripts/verify_corpus.py.)",
     "citation": "Qur'an 39:53 (partial)",
-    "verified_against_source": false
+    "verified_against_source": true
   },
   {
     "id": "quran-21-87-88-dua-yunus",
@@ -142,14 +143,14 @@
     "hadith_number": null,
     "narrator": null,
     "authenticity": "Qur'an",
-    "arabic": "لَّا إِلَٰهَ إِلَّا أَنتَ سُبْحَانَكَ إِنِّي كُنتُ مِنَ الطَّالِمِينَ",
+    "arabic": "لَّآ إِلَـٰهَ إِلَّآ أَنتَ سُبْحَـٰنَكَ إِنِّى كُنتُ مِنَ ٱلظَّـٰلِمِينَ",
     "transliteration": "Lā ilāha illā anta, subḥānaka, innī kuntu min al-ẓālimīn",
     "translation": "There is no deity except You; exalted are You. Indeed, I have been of the wrongdoers.",
     "themes": ["distress", "anxiety", "guilt", "forgiveness"],
     "intents": ["forgiveness", "comfort", "protection"],
-    "notes": "The dua of Prophet Yunus (Jonah) called out from extreme distress; widely recommended for anxiety and hardship combined with seeking forgiveness.",
+    "notes": "The dua of Prophet Yunus (Jonah) called out from extreme distress; widely recommended for anxiety and hardship combined with seeking forgiveness. (An earlier version of this entry had a single-letter transcription error turning 'wrongdoers' into a nonsense word -- caught and fixed via scripts/verify_corpus.py.)",
     "citation": "Qur'an 21:87 (partial)",
-    "verified_against_source": false
+    "verified_against_source": true
   },
   {
     "id": "quran-2-155-157-patience",
@@ -161,14 +162,15 @@
     "hadith_number": null,
     "narrator": null,
     "authenticity": "Qur'an",
-    "arabic": "وَبَشِّرِ الَّصَّابِرِينَ الَّذِينَ إِذَا أَصَابَتْهُم مُّصِيبَةٌ قَالُوا إِنَّا لِلَّهِ وَإِنَّا إِلَيْهِ رَاجِعُونَ",
+    "arabic": "وَبَشِّرِ ٱلصَّـٰبِرِينَ ٱلَّذِينَ إِذَآ أَصَـٰبَتْهُم مُّصِيبَةٌ قَالُوٓا۟ إِنَّا لِلَّهِ وَإِنَّآ إِلَيْهِ رَٰجِعُونَ",
     "transliteration": "Wa bashshir al-ṣābirīn, alladhīna idhā aṣābat-hum muṣībatun qālū innā lillāhi wa innā ilayhi rājiʻūn",
     "translation": "And give good tidings to the patient, who, when disaster strikes them, say: 'Indeed we belong to Allah, and indeed to Him we will return.'",
     "themes": ["grief", "patience", "loss", "sadness"],
     "intents": ["patience", "comfort"],
     "notes": "Frames patience through trials with a specific phrase to say at moments of loss, reorienting ownership of one's life back to Allah.",
     "citation": "Qur'an 2:155-156 (partial)",
-    "verified_against_source": false
+    "verified_against_source": false,
+    "verification_note": "The end of ayah 155 ('wa bashshir al-sabirin') was cross-checked against api.quran.com. Ayah 156 (the 'inna lillahi...' phrase) was not independently fetched -- verify_corpus.py only spot-checks the first ayah in a range -- but is one of the most universally known phrases in Islam."
   },
   {
     "id": "quran-2-255-ayat-al-kursi",
@@ -180,14 +182,14 @@
     "hadith_number": null,
     "narrator": null,
     "authenticity": "Qur'an",
-    "arabic": "اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ ··· وَهُوَ الْعَلِيُّ الْعَظِيمُ",
-    "transliteration": "Allāhu lā ilāha illā huwa al-ḥayyu al-qayyūm... wa huwa al-ʻalīyyu al-ʻaẓīm",
-    "translation": "Allah - there is no deity except Him, the Ever-Living, the Sustainer of all existence. Neither drowsiness nor sleep overtakes Him. To Him belongs all that is in the heavens and the earth... And He is the Most High, the Most Great.",
+    "arabic": "ٱللَّهُ لَآ إِلَـٰهَ إِلَّا هُوَ ٱلْحَىُّ ٱلْقَيُّومُ ۚ لَا تَأْخُذُهُۥ سِنَةٌ وَلَا نَوْمٌ ۚ لَّهُۥ مَا فِى ٱلسَّمَـٰوَٰتِ وَمَا فِى ٱلْأَرْضِ ۗ مَن ذَا ٱلَّذِى يَشْفَعُ عِندَهُۥٓ إِلَّا بِإِذْنِهِۦ ۚ يَعْلَمُ مَا بَيْنَ أَيْدِيهِمْ وَمَا خَلْفَهُمْ ۖ وَلَا يُحِيطُونَ بِشَىْءٍ مِّنْ عِلْمِهِۦٓ إِلَّا بِمَا شَآءَ ۚ وَسِعَ كُرْسِيُّهُ ٱلسَّمَـٰوَٰتِ وَٱلْأَرْضَ ۖ وَلَا يَـُٔودُهُۥ حِفْظُهُمَا ۚ وَهُوَ ٱلْعَلِىُّ ٱلْعَظِيمُ",
+    "transliteration": "Allāhu lā ilāha illā huwa al-ḥayyu al-qayyūm, lā ta'khudhuhu sinatun wa lā nawm, lahu mā fī al-samāwāti wa mā fī al-ard, man dhā alladhī yashfaʻu ʻindahu illā bi-idhnih, yaʻlamu mā bayna aydīhim wa mā khalfahum, wa lā yuḥīṭūna bi-shayʼin min ʻilmihi illā bimā shā'a, wasiʻa kursiyyuhu al-samāwāti wa al-ard, wa lā ya'ūduhu ḥifẓuhumā, wa huwa al-ʻalīyyu al-ʻaẓīm",
+    "translation": "Allah - there is no deity except Him, the Ever-Living, the Sustainer of all existence. Neither drowsiness nor sleep overtakes Him. To Him belongs all that is in the heavens and the earth. Who is it that can intercede with Him except by His permission? He knows what is before them and what will be after them, and they encompass nothing of His knowledge except what He wills. His Kursi extends over the heavens and the earth, and their preservation tires Him not. And He is the Most High, the Most Great.",
     "themes": ["fear", "anxiety", "protection", "restlessness"],
     "intents": ["protection", "comfort"],
-    "notes": "The single most widely memorized verse in the Qur'an, commonly recommended for protection and for calming fear or anxiety. Middle portion abbreviated here (...) pending full-text verification -- see verification note in README.",
+    "notes": "The single most widely memorized verse in the Qur'an, commonly recommended for protection and for calming fear or anxiety. Previously abbreviated with an ellipsis pending verification; now given in full, cross-checked against api.quran.com.",
     "citation": "Qur'an 2:255",
-    "verified_against_source": false
+    "verified_against_source": true
   },
   {
     "id": "quran-20-46-fear-not",
@@ -199,14 +201,14 @@
     "hadith_number": null,
     "narrator": null,
     "authenticity": "Qur'an",
-    "arabic": "قَالَ لَا تَخَافَا إِنَّنِي مَعَكُمَا أَسْمَعُ وَأَرَٰ",
+    "arabic": "قَالَ لَا تَخَافَآ ۖ إِنَّنِى مَعَكُمَآ أَسْمَعُ وَأَرَىٰ",
     "transliteration": "Qāla lā takhāfā innanī maʻakumā asmaʻu wa arā",
     "translation": "He said, 'Fear not. Indeed, I am with you both, hearing and seeing.'",
     "themes": ["fear", "anxiety"],
     "intents": ["comfort", "protection"],
     "notes": "Allah's reassurance to Musa and Harun before they faced Pharaoh -- a model for facing a frightening task while feeling accompanied and seen.",
     "citation": "Qur'an 20:46",
-    "verified_against_source": false
+    "verified_against_source": true
   },
   {
     "id": "quran-27-19-gratitude",
@@ -218,14 +220,14 @@
     "hadith_number": null,
     "narrator": null,
     "authenticity": "Qur'an",
-    "arabic": "رَبِّ أَوْزِعْنِي أَنْ أَشْكُرَ نِعْمَتَكَ الَّتِي أَنْعَمتَ عَلَيَّ",
+    "arabic": "رَبِّ أَوْزِعْنِىٓ أَنْ أَشْكُرَ نِعْمَتَكَ ٱلَّتِىٓ أَنْعَمْتَ عَلَىَّ",
     "transliteration": "Rabbi awziʻnī an ashkura niʻmataka allatī anʻamta ʻalayya",
     "translation": "My Lord, enable me to be grateful for Your favor which You have bestowed upon me.",
     "themes": ["gratitude", "hope"],
     "intents": ["gratitude"],
     "notes": "The dua of Prophet Sulayman (Solomon) upon recognizing a blessing; a model for turning a moment of gratitude into a direct request for more of it.",
     "citation": "Qur'an 27:19 (partial)",
-    "verified_against_source": false
+    "verified_against_source": true
   },
   {
     "id": "hadith-bukhari-6306-sayyid-al-istighfar",
@@ -237,14 +239,15 @@
     "hadith_number": "6306",
     "narrator": "Shaddad ibn Aws",
     "authenticity": "Sahih (Bukhari)",
-    "arabic": "اللَّهُمَّ أَنتَ رَبِّي لَا إِلَٰهَ إِلَّا أَنتَ، خَلَقتَنِي وَأَنَا عَبْدُكَ، وَأَنَا عَلَى عَهْدِكَ وَوَعْدِكَ مَا استَطَعتُ، أَعُوذُ بِكَ مِنْ شَرِّ مَا صَنَعتُ، أَبُوءُ لَكَ بِنِعْمَتِكَ عَلَيَّ وَأَبُوءُ بِذَنْبِي فَاِفْرْ لِي فَإِنَّهُ لَا يَفْرُ الّذُّنُوبَ إِلَّا أَنتَ",
-    "transliteration": "Allāhumma anta rabbī, lā ilāha illā anta, khalaqtanī wa ana ʻabduka, wa ana ʻalā ʻahdika wa waʻdika ma istataʻt, aʻūdhu bika min sharri mā ṣanaʻt, abūʻu laka biniʻmatika ʻalayya wa abūʻu bidhanbī, fa-ighfir lī fa-innahu lā yaghfiru al-dhunūa illā anta",
+    "arabic": null,
+    "transliteration": "Allāhumma anta rabbī, lā ilāha illā anta, khalaqtanī wa ana ʻabduka, wa ana ʻalā ʻahdika wa waʻdika ma istataʻt, aʻūdhu bika min sharri mā ṣanaʻt, abūʻu laka biniʻmatika ʻalayya wa abūʻu bidhanbī, faghfir lī fa-innahu lā yaghfiru al-dhunūba illā anta",
     "translation": "O Allah, You are my Lord, there is no deity except You. You created me and I am Your servant, and I remain committed to my covenant and promise to You as best I can. I seek refuge in You from the evil of what I have done. I acknowledge Your favor upon me, and I acknowledge my sin, so forgive me, for none forgives sins except You.",
     "themes": ["guilt", "forgiveness", "regret"],
     "intents": ["forgiveness"],
     "notes": "Known as 'Sayyid al-Istighfar' (the master formula of seeking forgiveness); the Prophet described whoever says it with certainty during the day or night and dies that same day or night as entering Paradise.",
     "citation": "Sahih al-Bukhari 6306",
-    "verified_against_source": false
+    "verified_against_source": false,
+    "verification_note": "This entry's Arabic text was found to be corrupted (missing letters) on inspection and has been removed rather than guessed at. There is no no-auth public API for hadith text (unlike Qur'an/api.quran.com) -- please copy the Arabic directly from sunnah.com/bukhari (search 'Sayyid al-Istighfar' or hadith 6306) into this field, then set verified_against_source to true."
   },
   {
     "id": "hadith-bukhari-6369-anxiety-dua",
@@ -256,14 +259,15 @@
     "hadith_number": "6369",
     "narrator": "Anas ibn Malik",
     "authenticity": "Sahih (Bukhari)",
-    "arabic": "الَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنَ الْهَمِّ وَالْحَزَنِ، وَالْعَجْزِ وَالْكَسَلِ، وَالْجُبْنِ وَالْبُخْلِ، وَضَلَعِ الّدَّيْنِ وَفَلَبَةِ الرِّجَالِ",
+    "arabic": null,
     "transliteration": "Allāhumma innī aʻūdhu bika min al-hammi wal-ḥazan, wal-ʻajzi wal-kasal, wal-jubni wal-bukhl, wa ḍalaʻi al-dayni wa ghalabati al-rijāl",
     "translation": "O Allah, I seek refuge in You from anxiety and grief, from incapacity and laziness, from cowardice and stinginess, and from being overcome by debt and overpowered by people.",
     "themes": ["anxiety", "sadness", "stress"],
     "intents": ["comfort", "protection"],
     "notes": "A dua the Prophet taught for regular recitation, pairing anxiety and grief together with several other burdens people commonly carry.",
     "citation": "Sahih al-Bukhari 6369",
-    "verified_against_source": false
+    "verified_against_source": false,
+    "verification_note": "This entry's Arabic text was found to be corrupted (missing letters) on inspection and has been removed rather than guessed at. Please copy the Arabic directly from sunnah.com/bukhari (hadith 6369) into this field, then set verified_against_source to true."
   },
   {
     "id": "hadith-bukhari-1162-istikharah",
@@ -276,7 +280,7 @@
     "narrator": "Jabir ibn Abdullah",
     "authenticity": "Sahih (Bukhari)",
     "arabic": null,
-    "transliteration": "Allāhumma innī astakhīuka bi-ʻilmika, wa astaqdiruka bi-qudratika, wa asʺluka min faḑlika al-ʺaẓīm... (then name the matter you are deciding on)",
+    "transliteration": "Allāhumma innī astakhīruka bi-ʻilmika, wa astaqdiruka bi-qudratika, wa asʼaluka min faḍlika al-ʻaẓīm... (then name the matter you are deciding on)",
     "translation": "O Allah, I seek Your guidance by virtue of Your knowledge, and I seek ability from You by virtue of Your power, and I ask You of Your great bounty... (the Prophet then taught naming the specific matter being decided, asking Allah to make it easy if it is good and to turn one away from it if it is not).",
     "themes": ["confusion", "decision", "uncertainty"],
     "intents": ["guidance"],
@@ -332,13 +336,14 @@
     "hadith_number": "3282",
     "narrator": "Sulayman ibn Sirad",
     "authenticity": "Sahih (Bukhari)",
-    "arabic": "أَعُوذُ بِالَّهِ مِنَ الّشَّيْطَانِ الرَّجِيمِ",
+    "arabic": null,
     "transliteration": "Aʻūdhu billāhi min al-shayṭāni al-rajīm",
     "translation": "I seek refuge in Allah from Satan, the accursed. The Prophet taught this phrase to a man who had become angry during an argument, telling him that if he said it, his anger would leave him.",
     "themes": ["anger"],
     "intents": ["guidance", "protection"],
     "notes": "A short phrase specifically prescribed as a practical response in the moment of anger, rather than only general advice about anger.",
     "citation": "Sahih al-Bukhari 3282",
-    "verified_against_source": false
+    "verified_against_source": false,
+    "verification_note": "This entry's Arabic text was found to be corrupted (missing letters) on inspection and has been removed rather than guessed at. Please copy the Arabic directly from sunnah.com/bukhari (hadith 3282) into this field, then set verified_against_source to true."
   }
 ]

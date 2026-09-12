@@ -83,34 +83,59 @@ Every entry in `data/corpus.json` carries:
 | `intents` | which of `comfort/forgiveness/gratitude/guidance/patience/protection` this serves |
 | `notes` | one-line context for why this source is relevant |
 | `citation` | human-readable reference shown in the UI |
-| `verified_against_source` | see below -- **currently `false` for every entry** |
+| `verified_against_source` | see below |
+| `verification_note` | present on entries that are partially verified or flag a known issue; explains what's still outstanding |
 
 ## Corpus verification status
 
-**Every entry currently has `"verified_against_source": false`.** The
-seed corpus was written from well-established, widely-published wording of
-very well-known ayat and hadith, but it was assembled without the ability to
-cross-check against a live authoritative source: this project was scaffolded
-in a sandboxed environment whose network egress is restricted to an
-allowlist that does not include `api.quran.com` or `sunnah.com`.
+**Updated 2026-09-12.** All 12 Qur'an entries have now been run through
+`scripts/verify_corpus.py` against the live Quran.com API (the sandbox this
+project was originally scaffolded in couldn't reach `api.quran.com` or
+`sunnah.com` at all; it was run afterwards from a normal machine). That run
+caught real problems, not just style differences:
 
-Before relying on this for real users:
+- **Two entries had a single-letter transcription error that changed the
+  meaning of the word** (`quran-39-53-forgiveness`: "forgives" had become a
+  nonsense word; `quran-21-87-88-dua-yunus`: "wrongdoers" had become a
+  nonsense word). Both are fixed and re-verified.
+- Several entries had minor missing diacritics, fixed using the exact text
+  returned by the API rather than retyped from memory.
+- `quran-2-255-ayat-al-kursi` was previously abbreviated with `...` in the
+  middle; it's now given in full, verified text.
+- 10 of 12 Qur'an entries are now `"verified_against_source": true`. The
+  other 2 (`quran-94-5-6-ease`, `quran-2-155-157-patience`) are multi-ayah
+  excerpts where only the first ayah was independently fetched (the script
+  only spot-checks the first ayah in a range) -- see each entry's
+  `verification_note`.
 
-1. Run `python scripts/verify_corpus.py` locally (needs normal internet
-   access) to diff each Qur'an entry's stored Arabic against
-   [Quran.com](https://quran.com)'s API.
-2. Manually check every hadith entry's collection + number against
-   [Sunnah.com](https://sunnah.com).
-3. Ideally, have someone with `ijazah`-level or scholarly familiarity review
-   the corpus before it's presented as authoritative to end users.
-4. Flip `verified_against_source` to `true` entry-by-entry as you confirm
-   each one, and remove the `⚠️` warning users see under unverified
-   entries in the UI (`app.py`, `render_source`).
+**Hadith entries are a separate, unresolved problem.** On inspection, three
+hadith entries' `arabic` field turned out to be corrupted (missing letters)
+compared to what was originally intended -- likely introduced when the JSON
+was first written. Rather than guess at a fix for text I can't independently
+verify, those three entries' `arabic` fields have been set to `null` (see
+each entry's `verification_note`); their transliteration/translation are
+believed correct but unverified. There's no equivalent no-auth public API
+for hadith the way Quran.com serves the Qur'an, so before this is shown to
+real users:
 
-The `2:255` (Ayat al-Kursi) and `1162` (istikharah) entries are especially
-worth checking first -- they're abbreviated/paraphrased in the seed corpus
-rather than given in full, specifically to avoid guessing at long text from
-memory.
+1. For every entry with `source_type: "hadith"`, look up
+   `hadith_collection` + `hadith_number` on [Sunnah.com](https://sunnah.com)
+   and copy the Arabic directly from there into the `arabic` field (don't
+   retype it by hand).
+2. Confirm the transliteration and translation read naturally against that
+   same page.
+3. Set `verified_against_source` to `true` once confirmed, and remove the
+   corresponding `verification_note`.
+4. Ideally, have someone with `ijazah`-level or scholarly familiarity review
+   the whole corpus before it's presented as authoritative to end users.
+
+`hadith-bukhari-1162-istikharah` is also still abbreviated/paraphrased
+rather than given in full -- worth completing once you're pulling text from
+Sunnah.com anyway.
+
+Once every entry is `verified_against_source: true`, the `⚠️` warning users
+see under unverified entries in the UI (`app.py`, `render_source`) will stop
+appearing on its own.
 
 ## Setup
 
