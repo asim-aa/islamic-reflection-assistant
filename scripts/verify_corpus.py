@@ -18,6 +18,7 @@ Usage:
 """
 import json
 import os
+import ssl
 import sys
 import urllib.request
 
@@ -25,9 +26,24 @@ CORPUS_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "corpus.json
 QURAN_API = "https://api.quran.com/api/v4/verses/by_key/{key}?fields=text_uthmani&translations=20"
 
 
+def _ssl_context() -> ssl.SSLContext:
+    # Some Python installs (notably python.org builds on macOS) don't wire up
+    # the system CA trust store by default, which makes urlopen() fail with
+    # CERTIFICATE_VERIFY_FAILED even though the connection itself is fine.
+    # certifi ships a CA bundle and is already a transitive dependency here
+    # (via requests/urllib3), so use it explicitly instead of relying on
+    # whatever the interpreter defaults to.
+    try:
+        import certifi
+
+        return ssl.create_default_context(cafile=certifi.where())
+    except ImportError:
+        return ssl.create_default_context()
+
+
 def fetch_verse(surah: int, ayah: str):
     key = f"{surah}:{ayah}"
-    with urllib.request.urlopen(QURAN_API.format(key=key), timeout=15) as resp:
+    with urllib.request.urlopen(QURAN_API.format(key=key), timeout=15, context=_ssl_context()) as resp:
         data = json.loads(resp.read().decode("utf-8"))
     verse = data["verse"]
     arabic = verse["text_uthmani"]
