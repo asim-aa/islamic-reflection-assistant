@@ -108,30 +108,47 @@ caught real problems, not just style differences:
   only spot-checks the first ayah in a range) -- see each entry's
   `verification_note`.
 
-**Hadith entries are a separate, unresolved problem.** On inspection, three
-hadith entries' `arabic` field turned out to be corrupted (missing letters)
-compared to what was originally intended -- likely introduced when the JSON
-was first written. Rather than guess at a fix for text I can't independently
-verify, those three entries' `arabic` fields have been set to `null` (see
-each entry's `verification_note`); their transliteration/translation are
-believed correct but unverified. There's no equivalent no-auth public API
-for hadith the way Quran.com serves the Qur'an, so before this is shown to
-real users:
+**Hadith entries were also re-verified**, against the
+[fawazahmed0/hadith-api](https://github.com/fawazahmed0/hadith-api) dataset
+(an open mirror of Sunnah.com's own Arabic hadith text, fetched by
+`hadithnumber` for Bukhari and by narrator/keyword search for Muslim, since
+its numbering scheme didn't line up cleanly). On inspection, three entries'
+`arabic` field had also turned out to be corrupted (missing letters)
+compared to what was originally intended, likely introduced when the JSON
+was first written -- all three have now been replaced with source-fetched
+text rather than retyped from memory. This pass caught two more
+non-trivial errors, both now fixed:
 
-1. For every entry with `source_type: "hadith"`, look up
-   `hadith_collection` + `hadith_number` on [Sunnah.com](https://sunnah.com)
-   and copy the Arabic directly from there into the `arabic` field (don't
-   retype it by hand).
-2. Confirm the transliteration and translation read naturally against that
-   same page.
-3. Set `verified_against_source` to `true` once confirmed, and remove the
-   corresponding `verification_note`.
-4. Ideally, have someone with `ijazah`-level or scholarly familiarity review
-   the whole corpus before it's presented as authoritative to end users.
+- **`hadith-bukhari-1166-istikharah`** was previously cited as hadith
+  **1162**, which is actually an unrelated report about a different prayer.
+  The correct number is **1166** (same narrator, Jabir ibn Abdullah); the
+  dua is now given in full rather than abbreviated.
+- **`hadith-muslim-zuhd-82-wonder-of-believer`** was previously cited as
+  "Sahih Muslim 2999", a bare consecutive number that pointed to an
+  unrelated hadith when checked. Sahih Muslim numbering varies more across
+  print editions/translations than Bukhari's does, so this entry now cites
+  the unambiguous book/hadith-within-book reference (Book 55, Hadith 82)
+  instead of a bare number -- content and narrator (Suhaib) are confirmed
+  correct.
+- **`hadith-bukhari-3282-anger-refuge`** previously appended "al-rajim"
+  ("the accursed") to the phrase, conflating it with the separate formula
+  recited before reading Qur'an. This specific hadith's actual wording is
+  shorter; fixed.
+- `hadith-bukhari-6306` (Sayyid al-Istighfar) and `hadith-bukhari-6369`
+  (anxiety dua) matched the originally-intended wording once re-fetched
+  from source, aside from the corruption mentioned above.
+- `hadith-bukhari-6114` (anger/strength) is now confirmed with full Arabic
+  added.
 
-`hadith-bukhari-1162-istikharah` is also still abbreviated/paraphrased
-rather than given in full -- worth completing once you're pulling text from
-Sunnah.com anyway.
+16 of 18 entries are now `"verified_against_source": true`. The 2 remaining
+are the Qur'an entries noted above where only the first ayah of a range was
+independently fetched.
+
+Still worth doing before this is shown to real users: have someone with
+`ijazah`-level or scholarly familiarity review the whole corpus, since
+automated cross-referencing catches transcription and citation errors but
+not, say, a translation that's technically accurate but misleading out of
+context.
 
 Once every entry is `verified_against_source: true`, the `⚠️` warning users
 see under unverified entries in the UI (`app.py`, `render_source`) will stop
