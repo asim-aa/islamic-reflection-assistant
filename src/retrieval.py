@@ -26,10 +26,17 @@ class CorpusIndex:
         return " ".join(p for p in parts if p)
 
     def search(self, query: str, themes: list[str] | None = None, top_k: int = 3, min_score: float = 0.3):
-        """Return up to top_k (score, entry) pairs above min_score, best first."""
+        """Return up to top_k (score, entry) pairs above min_score, best first.
+
+        Searches the *entire* corpus (not just the top few by raw semantic
+        similarity) before applying the theme-tag boost below. With a corpus
+        this size there's no real cost to that, and truncating first would
+        let a correctly-themed entry get excluded before the boost -- which
+        exists specifically to promote it -- ever had a chance to apply.
+        """
         query_vec = np.array(list(self.model.embed([query])), dtype="float32")
         faiss.normalize_L2(query_vec)
-        k = min(max(top_k * 3, top_k), len(self.entries))
+        k = len(self.entries)
         if k == 0:
             return []
         scores, idxs = self.index.search(query_vec, k)
