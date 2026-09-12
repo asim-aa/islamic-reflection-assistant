@@ -43,7 +43,16 @@ def _ssl_context() -> ssl.SSLContext:
 
 def fetch_verse(surah: int, ayah: str):
     key = f"{surah}:{ayah}"
-    with urllib.request.urlopen(QURAN_API.format(key=key), timeout=15, context=_ssl_context()) as resp:
+    # Quran.com's API rejects requests carrying Python's default urllib
+    # User-Agent (returns a bare 403), so send a normal browser-style one.
+    req = urllib.request.Request(
+        QURAN_API.format(key=key),
+        headers={
+            "User-Agent": "Mozilla/5.0 (compatible; islamic-reflection-assistant-corpus-verifier/1.0)",
+            "Accept": "application/json",
+        },
+    )
+    with urllib.request.urlopen(req, timeout=15, context=_ssl_context()) as resp:
         data = json.loads(resp.read().decode("utf-8"))
     verse = data["verse"]
     arabic = verse["text_uthmani"]
