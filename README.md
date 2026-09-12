@@ -180,9 +180,36 @@ non-trivial errors, both now fixed:
 - `hadith-bukhari-6114` (anger/strength) is now confirmed with full Arabic
   added.
 
-16 of 18 entries are now `"verified_against_source": true`. The 2 remaining
-are the Qur'an entries noted above where only the first ayah of a range was
-independently fetched.
+16 of 18 entries were `"verified_against_source": true` at that point. The 2
+remaining were the Qur'an entries noted above where only the first ayah of
+a range was independently fetched.
+
+**Expanded 2026-09-12** from 18 to 31 entries (7 new Qur'an, 6 new hadith),
+this time sourcing every entry's Arabic text *before* writing it rather
+than writing from memory and correcting afterward:
+
+- Qur'an text came from [risan/quran-json](https://github.com/risan/quran-json)
+  (a complete, openly-licensed Qur'an text dataset), downloaded directly
+  and sliced programmatically -- the Arabic field for each new entry is a
+  literal Python string slice of the source file, never retyped by hand.
+- Hadith text came from the same
+  [fawazahmed0/hadith-api](https://github.com/fawazahmed0/hadith-api)
+  dataset used above, with the quoted matn extracted programmatically by
+  splitting on the source's own quotation marks, again never retyped.
+- Even with source text in hand, an early pass of this work *still*
+  introduced Unicode mismatches (visually identical but different
+  underlying diacritic placement, e.g. `لَا` vs `لاَ` for "lā") when the
+  fetched text was typed into an edit rather than sliced programmatically.
+  Every new entry's `arabic` field was then re-verified with a script
+  doing an exact string/substring comparison against the source file
+  before being committed.
+- `hadith-bukhari-6502-nawafil-closeness` is given in full now rather than
+  truncated mid-hadith, after an attempt to programmatically cut it at a
+  "natural stopping point" nearly introduced a truncation bug -- using the
+  complete, exact text was simpler and safer than guessing where to cut.
+
+29 of 31 entries are now `"verified_against_source": true`. The 2 remaining
+are still the same multi-ayah Qur'an excerpts noted above.
 
 Still worth doing before this is shown to real users: have someone with
 `ijazah`-level or scholarly familiarity review the whole corpus, since
