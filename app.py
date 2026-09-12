@@ -4,6 +4,12 @@ from src.classify import classify_feeling
 from src.corpus import load_corpus, validate_corpus
 from src.generate import generate_reflection
 from src.retrieval import CorpusIndex
+from src.youtube import (
+    get_api_key as get_youtube_api_key,
+    load_trusted_channels,
+    resolve_all_channel_ids,
+    search_trusted_videos,
+)
 
 st.set_page_config(page_title="Reflection & Reminders", page_icon="\U0001F319", layout="centered")
 
@@ -18,6 +24,47 @@ def get_index() -> CorpusIndex:
     entries = load_corpus()
     validate_corpus(entries)
     return CorpusIndex(entries)
+
+
+@st.cache_resource(show_spinner=False)
+def get_channel_id_map(api_key: str) -> dict:
+    return resolve_all_channel_ids(load_trusted_channels(), api_key)
+
+
+@st.cache_data(ttl=6 * 60 * 60, show_spinner=False)
+def cached_search_trusted_videos(query: str, channel_id_map: dict, api_key: str, max_total: int) -> list[dict]:
+    # Cached for a few hours: each trusted channel costs its own API quota
+    # unit per search (see src/youtube.py), so repeated identical queries
+    # within a session -- or across users hitting the same emotion button --
+    # shouldn't re-spend it.
+    return search_trusted_videos(query, channel_id_map, api_key, per_channel=2, max_total=max_total)
+
+
+def find_related_videos(classification: dict, max_total: int = 6):
+    """Returns None if the video feature isn't configured (no API key), a
+    possibly-empty list otherwise. A trusted-channel search failing or
+    finding nothing is not an error -- the text reminder above still stands
+    on its own -- so any exception here is swallowed rather than surfaced."""
+    api_key = get_youtube_api_key()
+    if not api_key:
+        return None
+    try:
+        channel_id_map = get_channel_id_map(api_key)
+        if not channel_id_map:
+            return []
+        query_terms = classification.get("themes") or [classification.get("emotion", "")]
+        query = "islamic reminder " + " ".join(t for t in query_terms if t)
+        return cached_search_trusted_videos(query, channel_id_map, api_key, max_total)
+    except Exception:
+        return []
+
+
+def render_videos(videos: list[dict]) -> None:
+    st.subheader("Related videos from trusted channels")
+    for video in videos:
+        with st.container(border=True):
+            st.video(video["url"])
+            st.caption(f"{video['title']} — {video['channel_title']}")
 
 
 def render_source(entry: dict, explanation: str) -> None:
@@ -128,6 +175,16 @@ if st.session_state.result:
                     st.info("No further verified reminders found in the current library for this feeling.")
             except Exception:
                 st.error("Something went wrong while looking for another reminder. Please try again shortly.")
+
+    videos = find_related_videos(classification)
+    if videos:
+        st.divider()
+        render_videos(videos)
+    elif videos is None:
+        st.caption(
+            "Set YOUTUBE_API_KEY in your .env to also see related videos from a curated "
+            "list of trusted Islamic channels -- see README.md."
+        )
 
 st.divider()
 st.caption(

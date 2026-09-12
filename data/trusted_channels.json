@@ -1,0 +1,32 @@
+[
+  {
+    "handle": "@yaqeeninstitute",
+    "channel_id": null,
+    "name": "Yaqeen Institute for Islamic Research",
+    "description": "Research-driven Islamic studies institute producing videos on faith, theology, history, and contemporary issues."
+  },
+  {
+    "handle": "@bayyinah",
+    "channel_id": null,
+    "name": "Bayyinah Institute",
+    "description": "Founded by Nouman Ali Khan; focuses on Qur'anic Arabic, tafsir, and reflections on specific verses."
+  },
+  {
+    "handle": "@almaghribinstitute",
+    "channel_id": null,
+    "name": "AlMaghrib Institute",
+    "description": "Islamic seminary offering recorded seminars and lecture content across a range of instructors."
+  },
+  {
+    "handle": "@seekersguidance",
+    "channel_id": null,
+    "name": "SeekersGuidance",
+    "description": "Traditional Islamic learning nonprofit with classes and lectures on classical texts and everyday practice."
+  },
+  {
+    "handle": "@muftimenkofficial",
+    "channel_id": null,
+    "name": "Mufti Menk",
+    "description": "Widely-followed scholar producing reminders, khutbahs, and Q&A content."
+  }
+]

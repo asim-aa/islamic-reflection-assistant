@@ -66,6 +66,46 @@ says so -- zero hallucination surface in that path by construction.
 - **`scripts/verify_corpus.py`** -- optional helper to cross-check Qur'an
   entries against the public Quran.com API (see
   [Corpus verification status](#corpus-verification-status)).
+- **`src/youtube.py`** -- optional "related videos" feature (see below).
+- **`data/trusted_channels.json`** -- the video source allowlist.
+- **`scripts/resolve_channels.py`** -- one-time setup script for the above.
+
+## Related videos (optional)
+
+Same anti-hallucination philosophy extended to video: rather than an open
+YouTube search (anyone can upload a video calling itself "Islamic"), video
+results are restricted server-side to a small allowlist of trusted channels
+in `data/trusted_channels.json`. Each channel is identified by its public
+`@handle`; the app (or `scripts/resolve_channels.py`, which you should run
+once) resolves that handle to YouTube's internal `channel_id` via the API --
+this project never hardcodes an opaque `UC...` id from memory, since a typo
+there would be silent and hard to notice. A handle that fails to resolve
+(typo, channel renamed) is skipped rather than guessed at.
+
+`src/youtube.py`'s `search_trusted_videos` issues one `search.list` call
+*per trusted channel*, with `channelId` constraining results to only that
+channel server-side -- more expensive on API quota than one broad search,
+but a channel returning nothing is a safe failure, whereas a broad search
+quietly falling back to non-allowlisted results would defeat the point.
+
+**The 5 channels currently in `data/trusted_channels.json` are an
+unverified starting guess**, not a vetted list -- they were proposed as
+well-known mainstream Islamic education channels, but their exact `@handle`
+spelling could not be checked against real YouTube from the environment
+this was built in (same network restriction as the corpus verification
+work above). Before relying on this:
+
+1. Set `YOUTUBE_API_KEY` in `.env` (see `.env.example` for how to get a free
+   one).
+2. Run `python scripts/resolve_channels.py`. Any handle that's wrong or
+   misspelled will be reported and left with `channel_id: null`.
+3. Visit each channel yourself and confirm it's actually the account you
+   intend (channel names can be impersonated) before trusting its content.
+4. Add, remove, or edit entries in `data/trusted_channels.json` freely --
+   it's a plain list of `{handle, channel_id, name, description}` objects.
+
+Without `YOUTUBE_API_KEY` set, the app works exactly as before and simply
+omits the videos section.
 
 ## Corpus schema
 
@@ -186,13 +226,14 @@ pytest
 `tests/test_corpus.py` validates the corpus schema (fast, no network).
 `tests/test_retrieval.py` exercises the embedding + retrieval pipeline and
 skips itself if the embedding model can't be downloaded in the current
-environment (e.g. restricted CI).
+environment (e.g. restricted CI). `tests/test_youtube.py` covers channel
+resolution and search aggregation with the `requests` calls mocked out, so
+it needs no API key and no network.
 
 ## Roadmap / possible extensions
 
-- Expand the corpus well beyond the ~19 seed entries, ideally with scholarly
-  review, and swap the abbreviated entries (Ayat al-Kursi, istikharah) for
-  full verified text.
+- Expand the corpus well beyond the seed entries, ideally with scholarly
+  review.
 - Replace the theme-overlap boost with metadata filtering (e.g. only
   `intent: "forgiveness"` sources when that's the classified intent).
 - An agentic router that branches by intent before retrieving (comfort ->
@@ -202,3 +243,10 @@ environment (e.g. restricted CI).
   retrieval starts missing things.
 - Retrieval evaluation: a small labeled set of (feeling -> expected
   theme/source) pairs to measure retrieval quality as the corpus grows.
+- Vet and expand `data/trusted_channels.json` beyond the initial 5-channel
+  guess (see [Related videos](#related-videos-optional)); maybe let a video
+  carry its own `themes` tags the same way corpus entries do, once there's
+  a reason to rank across channels rather than just round-robin them.
+- Result caching for `search_trusted_videos` (e.g. `st.cache_data` with a
+  TTL of a few hours) to avoid re-spending API quota on repeated identical
+  queries within a session.
