@@ -1,19 +1,19 @@
 [
   {
     "handle": "@yaqeeninstitute",
-    "channel_id": null,
+    "channel_id": "UCLrUV5FkWV8lm9omd5vQApQ",
     "name": "Yaqeen Institute for Islamic Research",
     "description": "Research-driven Islamic studies institute producing videos on faith, theology, history, and contemporary issues."
   },
   {
     "handle": "@bayyinah",
-    "channel_id": null,
+    "channel_id": "UCRtiU-lpcBSi-ipFKyfIkug",
     "name": "Bayyinah Institute",
     "description": "Founded by Nouman Ali Khan; focuses on Qur'anic Arabic, tafsir, and reflections on specific verses."
   },
   {
     "handle": "@almaghribinstitute",
-    "channel_id": null,
+    "channel_id": "UCuPUpVCsj89nBzRL2u8-B8w",
     "name": "AlMaghrib Institute",
     "description": "Islamic seminary offering recorded seminars and lecture content across a range of instructors."
   },
@@ -25,7 +25,7 @@
   },
   {
     "handle": "@muftimenkofficial",
-    "channel_id": null,
+    "channel_id": "UCNB_OaI4524fASt8h0IL8dw",
     "name": "Mufti Menk",
     "description": "Widely-followed scholar producing reminders, khutbahs, and Q&A content."
   }
