@@ -2,9 +2,8 @@ import json
 import os
 
 import numpy as np
-import faiss
 
-from .retrieval import MODEL_NAME
+from .retrieval import MODEL_NAME, l2_normalize
 from .youtube import fetch_all_trusted_videos, get_api_key, load_trusted_channels, resolve_all_channel_ids
 
 VIDEO_INDEX_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "video_index.json")
@@ -38,11 +37,12 @@ def load_video_index(path: str = VIDEO_INDEX_PATH) -> list[dict]:
 class VideoIndex:
     """Semantic search over a locally cached video list -- no live YouTube
     API call per lookup, unlike src.youtube.search_trusted_videos. Mirrors
-    src.retrieval.CorpusIndex's approach (fastembed + faiss, score the
-    whole set before truncating) for the same reasons: this index is small
-    (one refresh cycle's worth of trusted-channel uploads), so there's no
-    cost to scoring everything, and truncating first risks the same class
-    of bug fixed in CorpusIndex.search."""
+    src.retrieval.CorpusIndex's approach (fastembed + plain numpy cosine
+    similarity, score the whole set before truncating) for the same
+    reasons: this index is small (one refresh cycle's worth of
+    trusted-channel uploads), so there's no cost to scoring everything, and
+    truncating first risks the same class of bug fixed in
+    CorpusIndex.search."""
 
     def __init__(self, videos: list[dict], model_name: str = MODEL_NAME, model=None):
         """`model` lets a caller share an already-constructed TextEmbedding
@@ -51,18 +51,16 @@ class VideoIndex:
         matters (it's what caused an out-of-memory crash in production)."""
         self.videos = videos
         self.model = model
-        self.index = None
+        self.embeddings = None
         if not videos:
             return
         if self.model is None:
             from fastembed import TextEmbedding
 
-            self.model = TextEmbedding(model_name=model_name)
+            self.model = TextEmbedding(model_name=model_name, threads=1)
         texts = [self._video_text(v) for v in videos]
         embeddings = np.array(list(self.model.embed(texts)), dtype="float32")
-        faiss.normalize_L2(embeddings)
-        self.index = faiss.IndexFlatIP(embeddings.shape[1])
-        self.index.add(embeddings)
+        self.embeddings = l2_normalize(embeddings)
 
     @staticmethod
     def _video_text(video: dict) -> str:
@@ -73,15 +71,15 @@ class VideoIndex:
         """Return up to top_k videos best matching query, capping how many
         can come from any single channel (per_channel_limit) so the results
         aren't dominated by one channel's especially on-topic back-catalog."""
-        if not self.videos or self.index is None:
+        if not self.videos or self.embeddings is None:
             return []
         query_vec = np.array(list(self.model.embed([query])), dtype="float32")
-        faiss.normalize_L2(query_vec)
-        scores, idxs = self.index.search(query_vec, len(self.videos))
+        query_vec = l2_normalize(query_vec)
+        scores = self.embeddings @ query_vec[0]
 
         ranked = []
-        for score, idx in zip(scores[0], idxs[0]):
-            if idx < 0 or score < min_score:
+        for idx, score in enumerate(scores):
+            if score < min_score:
                 continue
             ranked.append((float(score), self.videos[idx]))
         ranked.sort(key=lambda pair: pair[0], reverse=True)

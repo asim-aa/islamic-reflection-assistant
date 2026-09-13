@@ -13,7 +13,7 @@ class _DeterministicHashEmbedding:
 
     DIM = 64
 
-    def __init__(self, model_name=None):
+    def __init__(self, model_name=None, **kwargs):
         pass
 
     def embed(self, texts):
