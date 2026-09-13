@@ -1,3 +1,5 @@
+import html
+
 import streamlit as st
 
 from src.classify import classify_feeling
@@ -69,12 +71,120 @@ def find_related_videos(classification: dict, max_total: int = 6):
         return []
 
 
+VIDEO_GRID_CSS = """
+<style>
+.yt-thumb-wrap {
+    position: relative;
+    width: 100%;
+    padding-top: 56.25%;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #202020;
+    margin-bottom: 8px;
+}
+.yt-thumb-wrap img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.yt-play {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 46px;
+    height: 32px;
+    background: rgba(0, 0, 0, 0.75);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.yt-play::after {
+    content: "";
+    border-style: solid;
+    border-width: 7px 0 7px 12px;
+    border-color: transparent transparent transparent #ffffff;
+    margin-left: 3px;
+}
+.yt-meta {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+}
+.yt-avatar {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #cc0000;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 13px;
+}
+.yt-title {
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 1.3;
+    margin: 0 0 2px 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.yt-channel {
+    font-size: 12px;
+    opacity: 0.65;
+}
+.yt-card-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    margin-bottom: 20px;
+}
+</style>
+"""
+
+
 def render_videos(videos: list[dict]) -> None:
     st.subheader("Related videos from trusted channels")
-    for video in videos:
-        with st.container(border=True):
-            st.video(video["url"])
-            st.caption(f"{video['title']} — {video['channel_title']}")
+    st.markdown(VIDEO_GRID_CSS, unsafe_allow_html=True)
+    columns = st.columns(3)
+    for i, video in enumerate(videos):
+        title = html.escape(video.get("title") or "")
+        channel_title = html.escape(video.get("channel_title") or "")
+        url = html.escape(video.get("url") or "", quote=True)
+        thumbnail = video.get("thumbnail")
+        initial = html.escape((video.get("channel_title") or "?")[:1].upper())
+
+        thumb_html = (
+            f'<img src="{html.escape(thumbnail, quote=True)}" alt="">' if thumbnail else ""
+        )
+
+        with columns[i % 3]:
+            st.markdown(
+                f"""
+                <a class="yt-card-link" href="{url}" target="_blank" rel="noopener">
+                    <div class="yt-thumb-wrap">
+                        {thumb_html}
+                        <div class="yt-play"></div>
+                    </div>
+                    <div class="yt-meta">
+                        <div class="yt-avatar">{initial}</div>
+                        <div>
+                            <p class="yt-title">{title}</p>
+                            <p class="yt-channel">{channel_title}</p>
+                        </div>
+                    </div>
+                </a>
+                """,
+                unsafe_allow_html=True,
+            )
 
 
 def render_source(entry: dict, explanation: str) -> None:
