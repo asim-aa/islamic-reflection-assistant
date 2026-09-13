@@ -289,7 +289,10 @@ streamlit run app.py
 ```bash
 # Terminal 1 -- backend
 pip install -r backend/requirements.txt
-uvicorn backend.main:app --reload --port 8000
+# --reload-dir scopes the file watcher to just these two directories --
+# without it, --reload also watches frontend/node_modules and can trigger
+# a reload (interrupting startup) on unrelated npm activity.
+uvicorn backend.main:app --reload --reload-dir backend --reload-dir src --port 8000
 
 # Terminal 2 -- frontend
 cd frontend
