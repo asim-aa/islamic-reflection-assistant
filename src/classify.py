@@ -9,7 +9,14 @@ Given a short piece of text describing how someone feels, output ONLY a JSON obj
 - "emotion": the single primary emotion word (e.g. "anxiety", "sadness", "gratitude", "anger", "loneliness", "guilt", "confusion", "hope", "stress", "fear")
 - "secondary_emotions": a list of 0-2 additional emotion words, or an empty list
 - "intent": exactly one of {intents} -- pick the closest match for what kind of Islamic reminder would help
-- "themes": a list of 2-5 short lowercase theme keywords describing what the person needs (e.g. "trust in allah", "patience", "hope", "forgiveness")
+- "themes": a list of 2-5 short lowercase theme keywords tagging this specific feeling, for
+  matching against a reminder library's own tags -- always include the primary emotion itself
+  as one theme (e.g. "confusion", "loneliness"), plus more specific keywords for its cause or
+  shape if the text suggests one (e.g. "decision", "uncertainty", "isolation", "grief",
+  "overwhelm"). Only add a general remedy word like "patience" or "trust in allah" if the text
+  gives a specific reason to (e.g. mentions waiting, or relying on an outcome) -- don't reach
+  for these as a default when the input is short and generic, since that flattens genuinely
+  different feelings into the same handful of themes.
 
 Do not include any Quran verse, hadith, or dua text. Do not add commentary.
 Output valid JSON only, with no markdown code fences.""".format(intents=", ".join(VALID_INTENTS))

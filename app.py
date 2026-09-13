@@ -52,7 +52,17 @@ def find_related_videos(classification: dict, max_total: int = 6):
         channel_id_map = get_channel_id_map(api_key)
         if not channel_id_map:
             return []
-        query_terms = classification.get("themes") or [classification.get("emotion", "")]
+        # Lead with the specific classified emotion, not just the themes:
+        # the classifier prompt gives only a handful of example theme words
+        # ("trust in allah", "patience", "hope", "forgiveness"), so short
+        # one-line inputs like "I feel confused." tend to produce similar,
+        # generic themes across quite different emotions. Without the
+        # emotion word anchoring the query, two different feelings could
+        # search YouTube with near-identical terms and get back the same
+        # evergreen "trust Allah in hardship"-style videos for both.
+        emotion = classification.get("emotion", "")
+        themes = classification.get("themes") or []
+        query_terms = [emotion] + [t for t in themes if t and t != emotion]
         query = "islamic reminder " + " ".join(t for t in query_terms if t)
         return cached_search_trusted_videos(query, channel_id_map, api_key, max_total)
     except Exception:
