@@ -87,6 +87,85 @@ def search_channel_videos(query: str, channel_id: str, api_key: str, max_results
     return results
 
 
+def get_uploads_playlist_id(channel_id: str, api_key: str, timeout: int = 10) -> str | None:
+    """Look up a channel's "uploads" playlist id. Costs 1 quota unit, vs. 100
+    for a single search.list call -- this is the cheap side of the YouTube
+    Data API, and is what the periodic video-index refresh uses instead of
+    calling search.list live per user request."""
+    resp = requests.get(
+        f"{YOUTUBE_API_BASE}/channels",
+        params={"part": "contentDetails", "id": channel_id, "key": api_key},
+        timeout=timeout,
+    )
+    resp.raise_for_status()
+    items = resp.json().get("items", [])
+    if not items:
+        return None
+    return items[0]["contentDetails"]["relatedPlaylists"]["uploads"]
+
+
+def fetch_playlist_videos(playlist_id: str, api_key: str, max_results: int = 50, timeout: int = 10) -> list[dict]:
+    """Fetch up to max_results most recent videos from a playlist via
+    playlistItems.list (1 quota unit per page of up to 50), rather than
+    search.list (100 units per call). A private/deleted video that still
+    has a playlist entry has no resourceId.videoId or a missing snippet and
+    is skipped."""
+    resp = requests.get(
+        f"{YOUTUBE_API_BASE}/playlistItems",
+        params={
+            "part": "snippet",
+            "playlistId": playlist_id,
+            "maxResults": min(max_results, 50),
+            "key": api_key,
+        },
+        timeout=timeout,
+    )
+    resp.raise_for_status()
+    items = resp.json().get("items", [])
+    results = []
+    for item in items:
+        snippet = item.get("snippet", {})
+        video_id = snippet.get("resourceId", {}).get("videoId")
+        if not video_id:
+            continue
+        results.append(
+            {
+                "video_id": video_id,
+                "title": snippet.get("title"),
+                "description": snippet.get("description"),
+                "channel_title": snippet.get("channelTitle"),
+                "channel_id": snippet.get("channelId"),
+                "thumbnail": (snippet.get("thumbnails", {}).get("medium") or {}).get("url"),
+                "published_at": snippet.get("publishedAt"),
+                "url": f"https://www.youtube.com/watch?v={video_id}",
+            }
+        )
+    return results
+
+
+def fetch_all_trusted_videos(
+    channel_id_map: dict[str, str], api_key: str, per_channel_max: int = 50
+) -> list[dict]:
+    """Build a full local video index by walking each trusted channel's
+    uploads playlist. Meant to run periodically (see
+    scripts/refresh_video_index.py), not per user request -- a channel that
+    fails to resolve is skipped rather than aborting the whole refresh, so
+    one bad channel doesn't blank out everyone else's videos."""
+    videos = []
+    for handle, channel_id in channel_id_map.items():
+        try:
+            playlist_id = get_uploads_playlist_id(channel_id, api_key)
+            if not playlist_id:
+                continue
+            hits = fetch_playlist_videos(playlist_id, api_key, max_results=per_channel_max)
+        except Exception:
+            continue
+        for hit in hits:
+            hit["source_handle"] = handle
+            videos.append(hit)
+    return videos
+
+
 def search_trusted_videos(
     query: str,
     channel_id_map: dict[str, str],

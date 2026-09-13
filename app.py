@@ -2,16 +2,10 @@ import html
 
 import streamlit as st
 
-from src.classify import classify_feeling
 from src.corpus import load_corpus, validate_corpus
-from src.generate import generate_reflection
+from src.pipeline import build_video_query, run_reflection
 from src.retrieval import CorpusIndex
-from src.youtube import (
-    get_api_key as get_youtube_api_key,
-    load_trusted_channels,
-    resolve_all_channel_ids,
-    search_trusted_videos,
-)
+from src.video_index import VideoIndex, load_video_index
 
 st.set_page_config(page_title="Reflection & Reminders", page_icon="\U0001F319", layout="centered")
 
@@ -29,46 +23,22 @@ def get_index() -> CorpusIndex:
 
 
 @st.cache_resource(show_spinner=False)
-def get_channel_id_map(api_key: str) -> dict:
-    return resolve_all_channel_ids(load_trusted_channels(), api_key)
-
-
-@st.cache_data(ttl=6 * 60 * 60, show_spinner=False)
-def cached_search_trusted_videos(query: str, channel_id_map: dict, api_key: str, max_total: int) -> list[dict]:
-    # Cached for a few hours: each trusted channel costs its own API quota
-    # unit per search (see src/youtube.py), so repeated identical queries
-    # within a session -- or across users hitting the same emotion button --
-    # shouldn't re-spend it.
-    return search_trusted_videos(query, channel_id_map, api_key, per_channel=2, max_total=max_total)
+def get_video_index() -> VideoIndex:
+    # Searches a local index built by scripts/refresh_video_index.py --
+    # never a live YouTube API call per request. Live search.list costs 100
+    # quota units per channel per call; with 5 trusted channels that's 500
+    # units per single user submission, exhausting a default 10,000-unit
+    # daily quota after roughly 20 uses total. See src/video_index.py.
+    return VideoIndex(load_video_index())
 
 
 def find_related_videos(classification: dict, max_total: int = 6):
-    """Returns None if the video feature isn't configured (no API key), a
-    possibly-empty list otherwise. A trusted-channel search failing or
-    finding nothing is not an error -- the text reminder above still stands
-    on its own -- so any exception here is swallowed rather than surfaced."""
-    api_key = get_youtube_api_key()
-    if not api_key:
+    """Returns None if the video index hasn't been built yet (see
+    scripts/refresh_video_index.py), a possibly-empty list otherwise."""
+    video_index = get_video_index()
+    if not video_index.videos:
         return None
-    try:
-        channel_id_map = get_channel_id_map(api_key)
-        if not channel_id_map:
-            return []
-        # Lead with the specific classified emotion, not just the themes:
-        # the classifier prompt gives only a handful of example theme words
-        # ("trust in allah", "patience", "hope", "forgiveness"), so short
-        # one-line inputs like "I feel confused." tend to produce similar,
-        # generic themes across quite different emotions. Without the
-        # emotion word anchoring the query, two different feelings could
-        # search YouTube with near-identical terms and get back the same
-        # evergreen "trust Allah in hardship"-style videos for both.
-        emotion = classification.get("emotion", "")
-        themes = classification.get("themes") or []
-        query_terms = [emotion] + [t for t in themes if t and t != emotion]
-        query = "islamic reminder " + " ".join(t for t in query_terms if t)
-        return cached_search_trusted_videos(query, channel_id_map, api_key, max_total)
-    except Exception:
-        return []
+    return video_index.search(build_video_query(classification), top_k=max_total)
 
 
 VIDEO_GRID_CSS = """
@@ -208,15 +178,8 @@ def render_source(entry: dict, explanation: str) -> None:
 
 
 def run_pipeline(feeling_text: str, exclude_ids: set | None = None):
-    index = get_index()
-    classification = classify_feeling(feeling_text)
-    hits = index.search(feeling_text, themes=classification["themes"], top_k=6)
-    if exclude_ids:
-        hits = [(score, entry) for score, entry in hits if entry["id"] not in exclude_ids]
-    top_hits = hits[:3]
-    sources = [entry for _, entry in top_hits]
-    reflection = generate_reflection(feeling_text, classification, sources)
-    return classification, sources, reflection
+    result = run_reflection(feeling_text, get_index(), exclude_ids=exclude_ids)
+    return result["classification"], result["sources"], result["reflection"]
 
 
 st.title("How are you feeling?")

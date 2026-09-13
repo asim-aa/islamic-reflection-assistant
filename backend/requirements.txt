@@ -1,0 +1,9 @@
+fastapi>=0.110
+uvicorn[standard]>=0.29
+openai>=1.30
+fastembed>=0.3
+faiss-cpu>=1.8
+numpy>=1.26
+python-dotenv>=1.0
+certifi>=2024.0.0
+requests>=2.31

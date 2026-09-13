@@ -1,6 +1,9 @@
 from unittest.mock import MagicMock, patch
 
 from src.youtube import (
+    fetch_all_trusted_videos,
+    fetch_playlist_videos,
+    get_uploads_playlist_id,
     load_trusted_channels,
     resolve_all_channel_ids,
     search_trusted_videos,
@@ -119,3 +122,60 @@ def test_search_trusted_videos_skips_channel_on_request_failure():
 
     assert len(results) == 1
     assert results[0]["source_handle"] == "@b"
+
+
+def test_get_uploads_playlist_id_returns_playlist_id():
+    with patch("src.youtube.requests.get") as mock_get:
+        mock_get.return_value = _fake_response(
+            {"items": [{"contentDetails": {"relatedPlaylists": {"uploads": "UUplaylist123"}}}]}
+        )
+        playlist_id = get_uploads_playlist_id("UCsome", api_key="fake")
+    assert playlist_id == "UUplaylist123"
+
+
+def test_get_uploads_playlist_id_returns_none_for_unknown_channel():
+    with patch("src.youtube.requests.get") as mock_get:
+        mock_get.return_value = _fake_response({"items": []})
+        playlist_id = get_uploads_playlist_id("UCmissing", api_key="fake")
+    assert playlist_id is None
+
+
+def test_fetch_playlist_videos_skips_items_without_a_video_id():
+    with patch("src.youtube.requests.get") as mock_get:
+        mock_get.return_value = _fake_response(
+            {
+                "items": [
+                    {
+                        "snippet": {
+                            "resourceId": {"videoId": "vid1"},
+                            "title": "Video 1",
+                            "description": "About patience.",
+                            "channelTitle": "Channel A",
+                            "channelId": "UCA",
+                            "thumbnails": {"medium": {"url": "http://x/1.jpg"}},
+                            "publishedAt": "2024-01-01T00:00:00Z",
+                        }
+                    },
+                    # A privated/deleted video: the playlist entry survives
+                    # but has no resourceId.videoId -- must be skipped, not
+                    # crash on a missing key.
+                    {"snippet": {"title": "Removed video"}},
+                ]
+            }
+        )
+        videos = fetch_playlist_videos("UUsome", api_key="fake")
+    assert len(videos) == 1
+    assert videos[0]["video_id"] == "vid1"
+    assert videos[0]["url"] == "https://www.youtube.com/watch?v=vid1"
+
+
+def test_fetch_all_trusted_videos_tags_source_handle_and_skips_failing_channel():
+    channel_id_map = {"@a": "UCA", "@b": "UCB"}
+    with patch("src.youtube.get_uploads_playlist_id") as mock_playlist_id, patch(
+        "src.youtube.fetch_playlist_videos"
+    ) as mock_fetch:
+        mock_playlist_id.side_effect = ["UUA", Exception("channel gone")]
+        mock_fetch.return_value = [{"video_id": "vid1", "title": "Video 1"}]
+        videos = fetch_all_trusted_videos(channel_id_map, api_key="fake")
+    assert len(videos) == 1
+    assert videos[0]["source_handle"] == "@a"
