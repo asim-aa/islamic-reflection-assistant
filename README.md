@@ -48,9 +48,25 @@ says so -- zero hallucination surface in that path by construction.
 
 ## Architecture
 
-- **`app.py`** -- Streamlit UI: emotion buttons + free-text box, a result
-  card per source, and a "give me another reminder" button that re-runs
-  retrieval excluding what's already been shown.
+There are two front ends over the same pipeline. Pick one:
+
+- **`app.py`** -- the original Streamlit UI. Single process, simplest to run
+  locally, but Streamlit's rerun-the-whole-script model doesn't scale well
+  to many concurrent users and makes richer interactivity awkward. Kept as
+  a working fallback.
+- **`frontend/` + `backend/`** -- a Next.js frontend talking to a small
+  FastAPI backend over HTTP. Built for serving many users: the frontend is
+  static/CDN-cacheable, the backend is a stateless API that can be scaled
+  horizontally, and it gives real client-side interactivity that Streamlit
+  can't (see [Deployment](#deployment) below for how to actually run this
+  split in production).
+
+Both front ends call the same shared pipeline, so retrieval/classification/
+video-query logic can't drift between them:
+
+- **`src/pipeline.py`** -- `run_reflection()` (classify -> retrieve, excluding
+  already-shown ids -> generate) and `build_video_query()`, used by both
+  `app.py` and `backend/main.py`.
 - **`src/classify.py`** -- one LLM call that turns free text into a
   structured `{emotion, secondary_emotions, intent, themes}`. Falls back to a
   safe default (no themes, intent "comfort") if the model call or JSON
@@ -59,34 +75,60 @@ says so -- zero hallucination surface in that path by construction.
   [fastembed](https://github.com/qdrant/fastembed) (`BAAI/bge-small-en-v1.5`,
   ONNX-based, no torch) and searches a `faiss` `IndexFlatIP` (cosine
   similarity via L2-normalized vectors), with a small score boost for
-  theme-tag overlap with the classification step.
+  theme-tag overlap with the classification step. Always scores the whole
+  corpus before boosting/truncating -- see the commit history for a bug this
+  fixed (a correctly-themed entry could be excluded from a narrower
+  candidate pool before the boost got a chance to promote it).
 - **`src/generate.py`** -- the constrained generation step described above.
 - **`src/corpus.py`** -- loads and schema-validates `data/corpus.json`.
 - **`data/corpus.json`** -- the curated library itself (see schema below).
 - **`scripts/verify_corpus.py`** -- optional helper to cross-check Qur'an
   entries against the public Quran.com API (see
   [Corpus verification status](#corpus-verification-status)).
-- **`src/youtube.py`** -- optional "related videos" feature (see below).
+- **`src/video_index.py`** + **`scripts/refresh_video_index.py`** -- the
+  "related videos" feature (see below): a periodically-refreshed local
+  index, not a live per-request search.
+- **`src/youtube.py`** -- the YouTube Data API wrapper used by the refresh
+  script (and by `scripts/resolve_channels.py`).
 - **`data/trusted_channels.json`** -- the video source allowlist.
 - **`scripts/resolve_channels.py`** -- one-time setup script for the above.
+- **`backend/main.py`** -- FastAPI wrapper exposing `POST /api/reflect` and
+  `GET /api/health` for the Next.js frontend.
+- **`frontend/`** -- the Next.js app (see `frontend/README.md` for
+  Next.js-specific notes).
 
 ## Related videos (optional)
 
 Same anti-hallucination philosophy extended to video: rather than an open
 YouTube search (anyone can upload a video calling itself "Islamic"), video
-results are restricted server-side to a small allowlist of trusted channels
-in `data/trusted_channels.json`. Each channel is identified by its public
-`@handle`; the app (or `scripts/resolve_channels.py`, which you should run
-once) resolves that handle to YouTube's internal `channel_id` via the API --
-this project never hardcodes an opaque `UC...` id from memory, since a typo
-there would be silent and hard to notice. A handle that fails to resolve
-(typo, channel renamed) is skipped rather than guessed at.
+results are restricted to a small allowlist of trusted channels in
+`data/trusted_channels.json`. Each channel is identified by its public
+`@handle`; `scripts/resolve_channels.py` resolves that handle to YouTube's
+internal `channel_id` via the API -- this project never hardcodes an opaque
+`UC...` id from memory, since a typo there would be silent and hard to
+notice. A handle that fails to resolve (typo, channel renamed) is skipped
+rather than guessed at.
 
-`src/youtube.py`'s `search_trusted_videos` issues one `search.list` call
-*per trusted channel*, with `channelId` constraining results to only that
-channel server-side -- more expensive on API quota than one broad search,
-but a channel returning nothing is a safe failure, whereas a broad search
-quietly falling back to non-allowlisted results would defeat the point.
+**This is a local index, refreshed periodically -- not a live search per
+user request.** An earlier version called YouTube's `search.list` on every
+single "how are you feeling" submission (one call per trusted channel).
+`search.list` costs 100 quota units per call; at 5 channels that's ~500
+units per submission, which would exhaust a default 10,000-unit daily quota
+after roughly **20 total uses across all users**. That doesn't scale past a
+handful of people, so the app no longer does this:
+
+- `scripts/refresh_video_index.py` walks each trusted channel's uploads
+  playlist via `playlistItems.list` (~1 quota unit per channel, not 100) and
+  writes the result to `data/video_index.json`. Run this periodically (a
+  cron job, a scheduled CI job -- see [Deployment](#deployment)), not per
+  request.
+- `src/video_index.py`'s `VideoIndex` then does the same kind of local
+  embedding search over that file that `CorpusIndex` does over the corpus --
+  zero YouTube API calls in the request path, so it scales the same way the
+  corpus search already does.
+- `src/youtube.py` still has the live `search_trusted_videos` function (used
+  by neither front end anymore), kept only because it's simple, tested, and
+  harmless to leave in case a live-search use case comes up later.
 
 **The 5 channels currently in `data/trusted_channels.json` are an
 unverified starting guess**, not a vetted list -- they were proposed as
@@ -103,9 +145,11 @@ work above). Before relying on this:
    intend (channel names can be impersonated) before trusting its content.
 4. Add, remove, or edit entries in `data/trusted_channels.json` freely --
    it's a plain list of `{handle, channel_id, name, description}` objects.
+5. Run `python scripts/refresh_video_index.py` to build
+   `data/video_index.json`.
 
-Without `YOUTUBE_API_KEY` set, the app works exactly as before and simply
-omits the videos section.
+Without `YOUTUBE_API_KEY` set (or before the index has ever been built), the
+app works exactly as before and simply omits the videos section.
 
 ## Corpus schema
 
@@ -223,15 +267,39 @@ appearing on its own.
 
 ## Setup
 
+Both front ends need the same Python environment and `.env`:
+
 ```bash
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env   # fill in LLM_BASE_URL / LLM_API_KEY / LLM_MODEL
-streamlit run app.py
 ```
 
 The first run downloads a small ONNX embedding model (~100MB) via
 `fastembed`; subsequent runs use the local cache.
+
+### Option A: Streamlit (simplest, single process)
+
+```bash
+streamlit run app.py
+```
+
+### Option B: Next.js + FastAPI (built for many concurrent users)
+
+```bash
+# Terminal 1 -- backend
+pip install -r backend/requirements.txt
+uvicorn backend.main:app --reload --port 8000
+
+# Terminal 2 -- frontend
+cd frontend
+npm install
+cp .env.example .env.local   # NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+npm run dev
+```
+
+Then open http://localhost:3000. See `frontend/README.md` for Next.js
+specifics, and [Deployment](#deployment) below to actually put this online.
 
 ### LLM provider
 
@@ -244,18 +312,85 @@ The app talks to any OpenAI-compatible chat completions endpoint (see
 - **A local OpenAI-compatible server** (vLLM, Ollama, LM Studio): point
   `LLM_BASE_URL` at it instead -- nothing else in the code changes.
 
+## Deployment
+
+This deploys the Next.js + FastAPI split (Option B above) as two separate
+free-tier services, plus a periodic job for the video index. All three
+steps use external hosting accounts this project can't create on your
+behalf -- follow each platform's own sign-up flow.
+
+### 1. Backend on Render (or Railway) -- free tier
+
+1. Push this repo to GitHub (already done if you're reading this from the
+   repo).
+2. Create a new **Web Service** on [Render](https://render.com) (or
+   equivalent on [Railway](https://railway.app)), pointing at this repo.
+3. Build command: `pip install -r backend/requirements.txt`
+4. Start command: `uvicorn backend.main:app --host 0.0.0.0 --port $PORT`
+5. Set environment variables from your `.env`: `LLM_BASE_URL`,
+   `LLM_API_KEY`, `LLM_MODEL`, and `CORS_ALLOWED_ORIGINS` (set this once you
+   know your Vercel URL from step 2 below -- comma-separated if you need
+   more than one, e.g. a preview + production URL).
+6. Note the resulting backend URL (e.g. `https://your-app.onrender.com`).
+
+Free tiers on both platforms typically spin the service down after a period
+of inactivity and take a few seconds to wake back up on the next request --
+fine for moderate traffic, worth knowing so a first request after idle time
+isn't mistaken for a bug.
+
+### 2. Frontend on Vercel -- free tier
+
+1. Import this repo into [Vercel](https://vercel.com/new).
+2. Set the project's **Root Directory** to `frontend`.
+3. Set the environment variable `NEXT_PUBLIC_API_BASE_URL` to the backend
+   URL from step 1 (no trailing slash).
+4. Deploy. Vercel auto-detects Next.js; no build command changes needed.
+5. Go back to the backend's `CORS_ALLOWED_ORIGINS` (step 1.5) and set it to
+   this Vercel URL if you haven't already, then redeploy the backend.
+
+### 3. Schedule the video-index refresh
+
+The running backend only ever reads `data/video_index.json` -- something
+needs to periodically regenerate it and get the new file to the running
+service. Two straightforward options:
+
+- **GitHub Actions (recommended)**: a scheduled workflow that runs
+  `python scripts/refresh_video_index.py` (with `YOUTUBE_API_KEY` as a repo
+  secret) every few hours, commits the updated `data/video_index.json`, and
+  either pushes to a branch the backend redeploys from, or the backend
+  service itself pulls latest on a schedule. Exact wiring depends on your
+  Render/Railway redeploy triggers.
+- **A cron job on a machine you control** that runs the same script and
+  restarts (or has the backend re-read) `data/video_index.json`.
+
+Either way, this is a background job independent of user traffic -- it
+never runs in the request path, which is the whole point (see
+[Related videos](#related-videos-optional)).
+
 ## Tests
 
 ```bash
-pytest
+pytest                                    # core pipeline
+pip install -r backend/requirements.txt && pytest tests/test_backend.py  # API layer
+cd frontend && npm run lint && npm run build   # frontend type-check + build
 ```
 
 `tests/test_corpus.py` validates the corpus schema (fast, no network).
 `tests/test_retrieval.py` exercises the embedding + retrieval pipeline and
 skips itself if the embedding model can't be downloaded in the current
-environment (e.g. restricted CI). `tests/test_youtube.py` covers channel
-resolution and search aggregation with the `requests` calls mocked out, so
-it needs no API key and no network.
+environment (e.g. restricted CI); `tests/test_video_index.py` covers the
+same kind of search logic for videos with a deterministic fake embedder
+(no network dependency, unlike `test_retrieval.py`'s real-model tests).
+`tests/test_youtube.py` covers channel resolution, playlist fetching, and
+the video index refresh with `requests` mocked out. `tests/test_backend.py`
+exercises `backend/main.py`'s endpoints end-to-end with FastAPI's
+`TestClient`, using the same fake-embedder pattern. None of these need an
+API key or real network access.
+
+There's no automated test suite for `frontend/` yet beyond TypeScript's own
+type-checking (`npm run build` fails on type errors) and ESLint -- it was
+verified manually with a real production build plus a Playwright pass
+against a mock backend (see the "Add Next.js frontend" commit).
 
 ## Roadmap / possible extensions
 
@@ -271,9 +406,8 @@ it needs no API key and no network.
 - Retrieval evaluation: a small labeled set of (feeling -> expected
   theme/source) pairs to measure retrieval quality as the corpus grows.
 - Vet and expand `data/trusted_channels.json` beyond the initial 5-channel
-  guess (see [Related videos](#related-videos-optional)); maybe let a video
-  carry its own `themes` tags the same way corpus entries do, once there's
-  a reason to rank across channels rather than just round-robin them.
-- Result caching for `search_trusted_videos` (e.g. `st.cache_data` with a
-  TTL of a few hours) to avoid re-spending API quota on repeated identical
-  queries within a session.
+  guess (see [Related videos](#related-videos-optional)).
+- Automated frontend tests (e.g. Playwright against a real or mocked
+  backend) instead of the one-off manual verification pass.
+- A real CI-wired video-index refresh (see [Deployment](#deployment) step
+  3) instead of the manual/cron sketch described there.
