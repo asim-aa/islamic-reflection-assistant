@@ -1,0 +1,19 @@
+# Keeps `gcloud run deploy --source .` (and any local `docker build .`)
+# from uploading things the backend image doesn't need -- frontend/node_modules
+# alone can be hundreds of MB, and none of this is referenced by Dockerfile's
+# explicit COPY list anyway.
+.git/
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+.DS_Store
+.env
+.streamlit/
+
+frontend/
+tests/
+scripts/
+app.py

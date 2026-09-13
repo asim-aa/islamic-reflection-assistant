@@ -322,24 +322,73 @@ free-tier services, plus a periodic job for the video index. All three
 steps use external hosting accounts this project can't create on your
 behalf -- follow each platform's own sign-up flow.
 
-### 1. Backend on Render (or Railway) -- free tier
+### 1. Backend
 
-1. Push this repo to GitHub (already done if you're reading this from the
-   repo).
-2. Create a new **Web Service** on [Render](https://render.com) (or
-   equivalent on [Railway](https://railway.app)), pointing at this repo.
-3. Build command: `pip install -r backend/requirements.txt`
-4. Start command: `uvicorn backend.main:app --host 0.0.0.0 --port $PORT`
-5. Set environment variables from your `.env`: `LLM_BASE_URL`,
-   `LLM_API_KEY`, `LLM_MODEL`, and `CORS_ALLOWED_ORIGINS` (set this once you
-   know your Vercel URL from step 2 below -- comma-separated if you need
-   more than one, e.g. a preview + production URL).
-6. Note the resulting backend URL (e.g. `https://your-app.onrender.com`).
+**Render's free tier does not work for this backend** -- confirmed in
+practice: the ONNX embedding model + `onnxruntime` + FastAPI's own stack
+exceeds Render's fixed 512MB memory limit on that tier even after removing
+every avoidable dependency (see git history: sharing one embedding model
+instance, then dropping `faiss-cpu` entirely). Render's free tier has no
+way to raise that limit short of a paid instance type.
 
-Free tiers on both platforms typically spin the service down after a period
-of inactivity and take a few seconds to wake back up on the next request --
-fine for moderate traffic, worth knowing so a first request after idle time
-isn't mistaken for a bug.
+#### Option A: Google Cloud Run (recommended, still free)
+
+Cloud Run's always-free tier lets you configure a per-revision memory
+limit well above 512MB (comfortably enough for this backend) while
+remaining free for light traffic, since it scales to zero when idle and
+the free tier is based on request volume/compute-time rather than a fixed
+memory cap. This repo includes a `Dockerfile` (backend-only; not used by
+the Streamlit app or the frontend) and `.dockerignore` for this.
+
+1. Install the [gcloud CLI](https://cloud.google.com/sdk/docs/install) and
+   run `gcloud auth login`.
+2. Create or select a GCP project: `gcloud config set project YOUR_PROJECT_ID`
+   (a new project can be created at
+   [console.cloud.google.com/projectcreate](https://console.cloud.google.com/projectcreate)).
+3. Enable the required APIs once:
+   ```bash
+   gcloud services enable run.googleapis.com cloudbuild.googleapis.com
+   ```
+4. From the repo root, create `env.yaml` (already gitignored -- holds real
+   secrets, never commit it) with your actual values:
+   ```yaml
+   LLM_BASE_URL: "https://api.groq.com/openai/v1"
+   LLM_API_KEY: "your_groq_key_here"
+   LLM_MODEL: "openai/gpt-oss-20b"
+   CORS_ALLOWED_ORIGINS: "http://localhost:3000"
+   ```
+5. Deploy:
+   ```bash
+   gcloud run deploy islamic-reflection-backend \
+     --source . \
+     --region us-central1 \
+     --allow-unauthenticated \
+     --memory 1Gi \
+     --env-vars-file env.yaml
+   ```
+   This builds the `Dockerfile` via Cloud Build and deploys it -- no
+   separate build/start command fields to configure, unlike Render.
+6. `gcloud` prints the service URL when it finishes (e.g.
+   `https://islamic-reflection-backend-xxxxx.a.run.app`) -- that's your
+   `NEXT_PUBLIC_API_BASE_URL` for Vercel below.
+7. Once you have the Vercel URL, update `CORS_ALLOWED_ORIGINS` in
+   `env.yaml` and re-run the same `gcloud run deploy` command to redeploy
+   with it (or `gcloud run services update islamic-reflection-backend
+   --update-env-vars CORS_ALLOWED_ORIGINS=...`).
+
+Like Render's free tier, an idle Cloud Run service scales to zero and the
+first request after idle time takes longer (cold start: container boot +
+downloading the embedding model) -- expected, not a bug.
+
+#### Option B: Render (or Railway), paid tier
+
+If you'd rather not deal with Docker, the exact same steps from earlier in
+this README work on Render -- just pick a paid instance type with enough
+memory (headroom above 512MB) instead of the free one. Build command
+`pip install -r backend/requirements.txt`, start command
+`uvicorn backend.main:app --host 0.0.0.0 --port $PORT`, same environment
+variables (`LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL`,
+`CORS_ALLOWED_ORIGINS`).
 
 ### 2. Frontend on Vercel -- free tier
 
@@ -348,8 +397,9 @@ isn't mistaken for a bug.
 3. Set the environment variable `NEXT_PUBLIC_API_BASE_URL` to the backend
    URL from step 1 (no trailing slash).
 4. Deploy. Vercel auto-detects Next.js; no build command changes needed.
-5. Go back to the backend's `CORS_ALLOWED_ORIGINS` (step 1.5) and set it to
-   this Vercel URL if you haven't already, then redeploy the backend.
+5. Go back and set the backend's `CORS_ALLOWED_ORIGINS` to this Vercel URL
+   if you haven't already (see step 7 of the Cloud Run instructions, or the
+   equivalent env var update on Render), then redeploy the backend.
 
 ### 3. Schedule the video-index refresh
 
