@@ -44,15 +44,20 @@ class VideoIndex:
     cost to scoring everything, and truncating first risks the same class
     of bug fixed in CorpusIndex.search."""
 
-    def __init__(self, videos: list[dict], model_name: str = MODEL_NAME):
+    def __init__(self, videos: list[dict], model_name: str = MODEL_NAME, model=None):
+        """`model` lets a caller share an already-constructed TextEmbedding
+        (e.g. CorpusIndex's) instead of this class loading its own separate
+        copy of the ONNX model -- see CorpusIndex's docstring for why that
+        matters (it's what caused an out-of-memory crash in production)."""
         self.videos = videos
-        self.model = None
+        self.model = model
         self.index = None
         if not videos:
             return
-        from fastembed import TextEmbedding
+        if self.model is None:
+            from fastembed import TextEmbedding
 
-        self.model = TextEmbedding(model_name=model_name)
+            self.model = TextEmbedding(model_name=model_name)
         texts = [self._video_text(v) for v in videos]
         embeddings = np.array(list(self.model.embed(texts)), dtype="float32")
         faiss.normalize_L2(embeddings)

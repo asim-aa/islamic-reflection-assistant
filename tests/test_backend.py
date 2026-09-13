@@ -42,6 +42,17 @@ def client(monkeypatch):
         yield test_client
 
 
+def test_corpus_and_video_index_share_one_embedding_model(client):
+    """Regression test: CorpusIndex and VideoIndex used to each construct
+    their own TextEmbedding, loading two full copies of the ONNX model into
+    memory -- this is what caused an out-of-memory crash on a 512MB hosting
+    tier. backend/main.py's lifespan now passes corpus_index.model into
+    VideoIndex so only one copy is ever loaded."""
+    import backend.main as main
+
+    assert main.state["video_index"].model is main.state["corpus_index"].model
+
+
 def test_health_endpoint_reports_corpus_loaded(client):
     resp = client.get("/api/health")
     assert resp.status_code == 200

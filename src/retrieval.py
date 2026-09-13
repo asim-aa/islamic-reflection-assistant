@@ -6,9 +6,15 @@ MODEL_NAME = "BAAI/bge-small-en-v1.5"
 
 
 class CorpusIndex:
-    def __init__(self, entries: list[dict], model_name: str = MODEL_NAME):
+    def __init__(self, entries: list[dict], model_name: str = MODEL_NAME, model: TextEmbedding | None = None):
+        """`model` lets a caller pass in an already-constructed TextEmbedding
+        to share with another index (see src/video_index.py's VideoIndex) --
+        each instance otherwise loads its own full copy of the ONNX model,
+        which roughly doubles memory use when both indices run in the same
+        process (this is what caused an out-of-memory crash on Render's
+        512MB free tier when CorpusIndex and VideoIndex each built their own)."""
         self.entries = entries
-        self.model = TextEmbedding(model_name=model_name)
+        self.model = model or TextEmbedding(model_name=model_name)
         texts = [self._entry_text(e) for e in entries]
         embeddings = np.array(list(self.model.embed(texts)), dtype="float32")
         faiss.normalize_L2(embeddings)

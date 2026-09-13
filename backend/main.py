@@ -31,12 +31,16 @@ state: dict = {}
 async def lifespan(app: FastAPI):
     entries = load_corpus()
     validate_corpus(entries)
-    state["corpus_index"] = CorpusIndex(entries)
+    corpus_index = CorpusIndex(entries)
+    state["corpus_index"] = corpus_index
     # Loads whatever scripts/refresh_video_index.py last wrote to disk --
     # never a live YouTube call per request. An empty/missing index (e.g.
     # the refresh script hasn't been run yet) just means no videos in the
-    # response, not an error.
-    state["video_index"] = VideoIndex(load_video_index())
+    # response, not an error. Shares corpus_index's embedding model instead
+    # of loading a second copy of the ONNX model -- see CorpusIndex's model
+    # parameter docstring; running two copies in one process is what
+    # exceeded Render's free-tier 512MB memory limit.
+    state["video_index"] = VideoIndex(load_video_index(), model=corpus_index.model)
     yield
     state.clear()
 

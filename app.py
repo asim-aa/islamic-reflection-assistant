@@ -29,7 +29,11 @@ def get_video_index() -> VideoIndex:
     # quota units per channel per call; with 5 trusted channels that's 500
     # units per single user submission, exhausting a default 10,000-unit
     # daily quota after roughly 20 uses total. See src/video_index.py.
-    return VideoIndex(load_video_index())
+    #
+    # Shares get_index()'s embedding model rather than loading a second
+    # copy of the ONNX model into memory -- get_index() is itself cached by
+    # st.cache_resource, so this doesn't reload anything.
+    return VideoIndex(load_video_index(), model=get_index().model)
 
 
 def find_related_videos(classification: dict, max_total: int = 6):
